@@ -1,0 +1,11 @@
+html(lang="en")
+head
+    title #{title}
+body
+    div
+        ul
+            each user, index in users
+                li(id=index) #{user.name}
+                
+    - footer
+    include layout/footer.jade
