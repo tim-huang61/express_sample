@@ -23,12 +23,12 @@ mongoRouter.get('/insert', (req, resp) => {
         db.collection('students').insert({
             name: 'Wendy',
             telephone: '(06)22222222'
-        }, (error, result) => resp.json('Ok'));
+        }, (error, result) => resp.json('finished to insert.'));
         client.close();
     });
 });
 
-//Update 
+// Update 
 mongoRouter.get('/update', (req, resp) => {
     MongoClient.connect(url, function (error, client) {
         const db = client.db(dbName);
@@ -36,7 +36,18 @@ mongoRouter.get('/update', (req, resp) => {
             name: 'Tim'
         }, {
             telephone: '(06)22222222'
-        }, (error, result) => resp.json('Ok'));
+        }, (error, result) => resp.json('finished to update.'));
+        client.close();
+    });
+});
+
+// Delete
+mongoRouter.get('/delete', (req, resp) => {
+    MongoClient.connect(url, function (error, client) {
+        const db = client.db(dbName);
+        db.collection('students').deleteOne({
+            name: 'Tim'
+        }, (error, result) => resp.json('it finishes to delete.'));
         client.close();
     });
 });
