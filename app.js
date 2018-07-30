@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoPage = require('./mongo_test');
 const app = express();
 
 app.get('/json', (req, resp) => {
@@ -37,8 +38,10 @@ app.get('/sample3', (req, resp) => {
     });
 });
 
-app.listen(8081);
+app.use('/mongo', mongoPage);
+
+app.listen(8085);
 app.set('views', `${__dirname}\\views`);
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'ejs');
- app.engine('jade', require('jade').__express);
+app.engine('jade', require('jade').__express);
