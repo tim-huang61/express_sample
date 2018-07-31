@@ -9,41 +9,37 @@ const dbName = 'sample';
 mongoRouter.get('/query', (req, resp) => {
     MongoClient.connect(url, function (error, client) {
         const db = client.db(dbName);
-        db.collection('students').find({
-            name: /Tim/
-        }).toArray((error, docs) => resp.json(docs));
+        req.query.name = new RegExp(req.query.name);
+        db.collection('students').find(req.query).toArray((error, docs) => resp.json(docs));
         client.close();
     });
-    
-    //MongoDbHelper.query({ name: /Tim/ }, (error, docs) => resp.json(docs));
+
+    //MongoDbHelper.query(req.query, (error, docs) => resp.json(docs));
 });
 
 //Insert 
-mongoRouter.get('/insert', (req, resp) => {
+mongoRouter.post('/insert', (req, resp) => {
     MongoClient.connect(url, function (error, client) {
         const db = client.db(dbName);
-        db.collection('students').insert({
-            name: 'Wendy',
-            telephone: '(06)22222222'
-        }, (error, result) => resp.json('finished to insert.'));
+        db.collection('students').insert(req.body,
+            (error, result) => resp.json('finished to insert.'));
         client.close();
     });
 
-    // MongoDbHelper.insert({
-    //     name: 'Wendy',
-    //     telephone: '(06)22222222'
-    // }, (error, docs) => resp.json('finished to insert.'));
+    // MongoDbHelper.insert(req.body, (error, docs) => resp.json('finished to insert.'));
 });
 
 // Update 
-mongoRouter.get('/update', (req, resp) => {
+mongoRouter.put('/update', (req, resp) => {
     MongoClient.connect(url, function (error, client) {
         const db = client.db(dbName);
-        db.collection('students').update({
-            name: 'Tim'
+        db.collection('students').findOneAndUpdate({
+            name: req.body.name
         }, {
-                telephone: '(06)22222222'
-            }, (error, result) => resp.json('finished to update.'));
+            $set: req.body
+        }, {
+            upsert: true
+        }, (error, result) => resp.json('finished to update.'));
         client.close();
     });
 
@@ -51,16 +47,14 @@ mongoRouter.get('/update', (req, resp) => {
 });
 
 // Delete
-mongoRouter.get('/delete', (req, resp) => {
+mongoRouter.delete('/delete', (req, resp) => {
     MongoClient.connect(url, function (error, client) {
         const db = client.db(dbName);
-        db.collection('students').deleteOne({
-            name: 'Tim'
-        }, (error, result) => resp.json('it finishes to delete.'));
+        db.collection('students').deleteOne(req.query, (error, result) => resp.json('it finishes to delete.'));
         client.close();
     });
 
-    // MongoDbHelper.delete({ name: 'Tim' }, (error, docs) => resp.json('finished to delete.'));
+    // MongoDbHelper.delete(req.query, (error, docs) => resp.json('finished to delete.'));
 });
 
 module.exports = mongoRouter;
@@ -77,7 +71,9 @@ class MongoDbHelper {
     }
 
     static update(filter, obj, callback) {
-        this.dbExecute(collection => collection.update(filter, obj, callback));
+        this.dbExecute(collection => collection.update(filter, obj, {
+            upsert: true
+        }, callback));
     }
 
     static delete(filter, callback) {
