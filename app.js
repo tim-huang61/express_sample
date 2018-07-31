@@ -7,7 +7,20 @@ const app = express();
 const key = 'timhuang';
 
 app.use(bodyParser.urlencoded({ extended: false }));
-// app.use(expressJwt({ secret: key }).unless({ path: ['/login']}));
+app.use(bodyParser.json());
+app.all('*',(req, resp, next)=> {
+    resp.header('Access-Control-Allow-Origin', '*');
+    resp.header('Access-Control-Allow-Headers', 'Content-Type,Content-Length, Authorization, Accept,X-Requested-With'); 
+    resp.header('Access-Control-Allow-Methods','PUT,POST,GET,DELETE,OPTIONS');
+    if(req.method === 'OPTIONS'){
+        return resp.status(200).send();
+    };
+    
+    next();
+});
+app.use(expressJwt({ secret: key }).unless({ path: ['/api/login']}));
+
+app.use('/mongo', mongoPage);
 app.get('/json', (req, resp) => {
     resp.json({
         name: 'Tim',
@@ -40,35 +53,36 @@ app.get('/sample3', (req, resp) => {
     });
 });
 
-app.get('/login', (req, resp) => resp.render('login.html'))
-app.post('/login', (req, resp) => {
+app.post('/api/login', (req, resp) => {
     // validate user
     const user = req.body;
     if (user && user.username === 'Tim' && user.password === '123456') {
         const token = jwt.sign(user, key, { expiresIn: 60 * 60 });
-        resp.json(token);
+        return resp.json({token});
     }
 
-    resp.status = 400;
-    resp.json({ error: 'login failed!!' });
+    return resp.status(400).json({ error: 'login failed!!' });
 });
 
 app.get('/api/test', (req, resp) => resp.json('你不錯有權限'));
 
 app.use((error, req, resp, next) => {
     if (error.status === 401) {
-        resp.status(401).send('你沒權限啦');
+      return resp.status(401).json({ error: '你沒權限啦'});
+    }
+    
+    if (error.stack) {
+       return resp.status(500).json({ error: 'Server 噴噴'});
     }
 
-    if (error.stack) {
-        resp.status(500).send('Server 噴噴');
-    }
+    next();
 });
 
-app.use('/mongo', mongoPage);
-
+// 監聽
 app.listen(8085);
+// 設定讀取的views路徑
 app.set('views', `${__dirname}\\views`);
+// 套用html模板
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'ejs');
 app.engine('jade', require('jade').__express);
